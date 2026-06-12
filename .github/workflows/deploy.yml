@@ -5,9 +5,12 @@
 #   変更があればcommitしてから再ビルド・再デプロイ。
 #   変更が無ければビルド・デプロイはスキップ。
 #
-# 配信はGitHub Actions方式(Pagesアーティファクト)に一本化。
-# 「Pagesのソース設定を揃える」ステップが build_type=workflow を冪等に設定するため、
-# Settings → Pages を手動で変更する必要はない。
+# デプロイは実行時にPagesのソース設定(build_type)を読み取り、設定に合う方式を使う:
+#   - legacy   (Deploy from a branch): gh-pagesブランチへpush
+#   - workflow (GitHub Actions):       Pagesアーティファクトをデプロイ
+# 推奨はworkflow方式。切替はSettings → Pages → Source を「GitHub Actions」に
+# 変更するだけでよい(次回実行から自動で切り替わる)。GITHUB_TOKENでは
+# build_typeを変更できない(admin権限が必要)ため、ここでは変更を試みない。
 name: Deploy to GitHub Pages
 
 on:
@@ -60,23 +63,36 @@ jobs:
           fi
 
       # 定期実行で結果に変更が無ければ、以降のビルド・デプロイをスキップ
-      - name: Pagesのソース設定を揃える (build_type=workflow, 冪等)
+      - name: Pagesのソース設定を読み取り
+        id: pages
         if: github.event_name != 'schedule' || steps.update.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh api -X PUT "repos/${{ github.repository }}/pages" -f build_type=workflow
+        run: |
+          bt=$(gh api "repos/${{ github.repository }}/pages" --jq .build_type)
+          echo "現在のbuild_type: $bt"
+          echo "build_type=$bt" >> "$GITHUB_OUTPUT"
 
       - run: npm run build
-        if: github.event_name != 'schedule' || steps.update.outputs.changed == 'true'
+        if: steps.pages.outputs.build_type != ''
 
+      # 配信ソース「Deploy from a branch (gh-pages)」用
+      - name: gh-pagesブランチへデプロイ
+        if: steps.pages.outputs.build_type == 'legacy'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+
+      # 配信ソース「GitHub Actions」用
       - uses: actions/configure-pages@v5
-        if: github.event_name != 'schedule' || steps.update.outputs.changed == 'true'
+        if: steps.pages.outputs.build_type == 'workflow'
 
       - uses: actions/upload-pages-artifact@v3
-        if: github.event_name != 'schedule' || steps.update.outputs.changed == 'true'
+        if: steps.pages.outputs.build_type == 'workflow'
         with:
           path: dist
 
       - uses: actions/deploy-pages@v4
         id: deployment
-        if: github.event_name != 'schedule' || steps.update.outputs.changed == 'true'
+        if: steps.pages.outputs.build_type == 'workflow'
