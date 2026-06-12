@@ -2,12 +2,12 @@
 #
 # - mainへのpush時: ビルドしてデプロイ
 # - 定期実行(毎時0分): npm run update-results で結果を取得し、
-#   変更があればcommitしてから再ビルド・再デプロイ
-#   (結果に変更が無ければcommit・再デプロイは行わない)
+#   変更があればcommitしてから再ビルド・再デプロイ。
+#   変更が無ければビルド・デプロイはスキップ。
 #
-# Pagesの配信ソース設定(branch / GitHub Actions)のどちらでも動くよう、
-# gh-pagesブランチへのpushとPagesアーティファクトのデプロイを両方行う。
-# 設定と一致しない側のステップは失敗するが continue-on-error で無視される。
+# 配信はGitHub Actions方式(Pagesアーティファクト)に一本化。
+# 「Pagesのソース設定を揃える」ステップが build_type=workflow を冪等に設定するため、
+# Settings → Pages を手動で変更する必要はない。
 name: Deploy to GitHub Pages
 
 on:
@@ -29,6 +29,9 @@ concurrency:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -40,6 +43,7 @@ jobs:
       - run: npm ci
 
       - name: 試合結果を更新 (定期実行・手動実行時のみ)
+        id: update
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
           npm run update-results
@@ -49,28 +53,30 @@ jobs:
             git add src/data/results.json
             git commit -m "試合結果を自動更新"
             git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "結果データに変更なし"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # 定期実行で結果に変更が無ければ、以降のビルド・デプロイをスキップ
+      - name: Pagesのソース設定を揃える (build_type=workflow, 冪等)
+        if: github.event_name != 'schedule' || steps.update.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api -X PUT "repos/${{ github.repository }}/pages" -f build_type=workflow
+
       - run: npm run build
+        if: github.event_name != 'schedule' || steps.update.outputs.changed == 'true'
 
-      # 配信ソース「Deploy from a branch (gh-pages)」用
-      - name: gh-pagesブランチへデプロイ
-        uses: peaceiris/actions-gh-pages@v4
-        continue-on-error: true
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-
-      # 配信ソース「GitHub Actions」用
       - uses: actions/configure-pages@v5
-        continue-on-error: true
+        if: github.event_name != 'schedule' || steps.update.outputs.changed == 'true'
 
       - uses: actions/upload-pages-artifact@v3
-        continue-on-error: true
+        if: github.event_name != 'schedule' || steps.update.outputs.changed == 'true'
         with:
           path: dist
 
       - uses: actions/deploy-pages@v4
-        continue-on-error: true
+        id: deployment
+        if: github.event_name != 'schedule' || steps.update.outputs.changed == 'true'
