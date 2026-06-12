@@ -1,8 +1,12 @@
 # GitHub Pagesへのデプロイ + 試合結果の定期自動更新
 #
-# - mainへのpush時: ビルドして gh-pages ブランチへデプロイ
+# - mainへのpush時: ビルドしてデプロイ
 # - 定期実行(JST 0/6/12/18時): npm run update-results で結果を取得し、
 #   変更があればcommitしてから再ビルド・再デプロイ
+#
+# Pagesの配信ソース設定(branch / GitHub Actions)のどちらでも動くよう、
+# gh-pagesブランチへのpushとPagesアーティファクトのデプロイを両方行う。
+# 設定と一致しない側のステップは失敗するが continue-on-error で無視される。
 name: Deploy to GitHub Pages
 
 on:
@@ -14,6 +18,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: pages
@@ -48,8 +54,22 @@ jobs:
 
       - run: npm run build
 
+      # 配信ソース「Deploy from a branch (gh-pages)」用
       - name: gh-pagesブランチへデプロイ
         uses: peaceiris/actions-gh-pages@v4
+        continue-on-error: true
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+
+      # 配信ソース「GitHub Actions」用
+      - uses: actions/configure-pages@v5
+        continue-on-error: true
+
+      - uses: actions/upload-pages-artifact@v3
+        continue-on-error: true
+        with:
+          path: dist
+
+      - uses: actions/deploy-pages@v4
+        continue-on-error: true
