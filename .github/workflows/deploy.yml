@@ -1,8 +1,9 @@
 # GitHub Pagesへのデプロイ + 試合結果の定期自動更新
 #
 # - mainへのpush時: ビルドしてデプロイ
-# - 定期実行(JST 0/6/12/18時): npm run update-results で結果を取得し、
+# - 定期実行(毎時0分): npm run update-results で結果を取得し、
 #   変更があればcommitしてから再ビルド・再デプロイ
+#   (結果に変更が無ければcommit・再デプロイは行わない)
 #
 # Pagesの配信ソース設定(branch / GitHub Actions)のどちらでも動くよう、
 # gh-pagesブランチへのpushとPagesアーティファクトのデプロイを両方行う。
@@ -13,7 +14,7 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: '0 3,9,15,21 * * *' # UTC 3/9/15/21時 = JST 12/18/0/6時
+    - cron: '0 * * * *' # 毎時0分 (フィード更新の遅延を拾うため高頻度でポーリング)
   workflow_dispatch:
 
 permissions:
