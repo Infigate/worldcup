@@ -1,6 +1,9 @@
 // 試合結果を openfootball/worldcup.json (パブリックドメイン) から取得して
 // src/data/results.json に反映するスクリプト。
 //   実行: npm run update-results
+// - グループ: チームペアで日程照合し results にスコアを反映。
+// - ノックアウト: フィードの試合番号(num)で照合し、対戦カードが確定したら
+//   slots に、スコア(PK score.p / 延長 score.et 含む)は results に反映。
 // フィードにまだスコアが無い試合はスキップされる。手動で編集する場合は
 // src/data/results.json の results に { "m<試合番号>": { "score": [h, a] } } を追記する。
 import { readFile, writeFile } from 'node:fs/promises';
@@ -66,7 +69,8 @@ const TEAM_ALIASES = {
 
 function teamId(name) {
   if (!name) return null;
-  const key = String(name).toLowerCase().trim();
+  // 表記ゆれ吸収: "Bosnia & Herzegovina" のような "&" を "and" に正規化
+  const key = String(name).toLowerCase().trim().replace(/\s*&\s*/g, ' and ');
   return TEAM_ALIASES[key] ?? null;
 }
 
@@ -138,44 +142,82 @@ async function main() {
   }
 
   const data = JSON.parse(await readFile(RESULTS_PATH, 'utf8'));
-  let updated = 0;
+  if (!data.slots) data.slots = {};
+  let scoreChanges = 0;
+  let slotChanges = 0;
   let unmatched = 0;
 
   for (const m of matches) {
-    const score = extractScore(m);
-    if (!score) continue;
     const h = teamId(m.team1?.name ?? m.team1);
     const a = teamId(m.team2?.name ?? m.team2);
+    // 試合番号の特定: ノックアウトはフィードの num、グループはチームペアで照合
+    const n = m.num ?? (h && a ? FIXTURE_BY_PAIR.get(pairKey(h, a)) : undefined);
+    const score = extractScore(m);
+
+    if (!n) {
+      // 番号を特定できない (R16以降の "W○○" プレースホルダー等)。スコア付きなら警告。
+      if (score) {
+        console.warn(`日程と照合できません: ${JSON.stringify(m.team1)} vs ${JSON.stringify(m.team2)}`);
+        unmatched++;
+      }
+      continue;
+    }
+
+    const id = `m${n}`;
+    const isKnockout = n > GROUP_FIXTURES.length; // グループは 1..72、それ以降はノックアウト
+
+    // ノックアウトの対戦カード (両チーム確定時) を slots に記録。
+    // 本アプリのR32は順位/3位通過の自動解決に依存せず、フィードの確定カードを優先。
+    if (isKnockout && h && a) {
+      const prev = data.slots[id];
+      if (!prev || prev.home !== h || prev.away !== a) {
+        data.slots[id] = { home: h, away: a };
+        console.log(`対戦確定: ${id} ${h} vs ${a}`);
+        slotChanges++;
+      }
+    }
+
+    if (!score) continue;
     if (!h || !a) {
       console.warn(`チーム名を解決できません: ${JSON.stringify(m.team1)} vs ${JSON.stringify(m.team2)}`);
       unmatched++;
       continue;
     }
-    const n = m.num ?? FIXTURE_BY_PAIR.get(pairKey(h, a));
-    if (!n) {
-      console.warn(`日程と照合できません: ${h} vs ${a} (ノックアウトは手動で追記してください)`);
-      unmatched++;
-      continue;
-    }
-    const id = `m${n}`;
-    // フィードのhome/awayが本アプリと逆向きの場合はスコアを入れ替える
+
+    // フィードのhome/awayが本アプリの日程と逆向きの場合(グループのみ)はスコアを入れ替える
     const fixture = GROUP_FIXTURES.find(([num]) => num === n);
     const flipped = fixture && fixture[1] !== h;
     const entry = { score: flipped ? [score[1], score[0]] : score };
+    if (isKnockout) {
+      // PK戦(score.p) と 延長(score.et) を反映
+      const p = m.score?.p;
+      if (Array.isArray(p) && p.length === 2) entry.pk = flipped ? [p[1], p[0]] : p;
+      if (m.score?.et) entry.et = true;
+    }
+
     const prev = data.results[id];
-    if (!prev || prev.score[0] !== entry.score[0] || prev.score[1] !== entry.score[1]) {
+    const same =
+      prev &&
+      prev.score[0] === entry.score[0] &&
+      prev.score[1] === entry.score[1] &&
+      JSON.stringify(prev.pk ?? null) === JSON.stringify(entry.pk ?? null) &&
+      Boolean(prev.et) === Boolean(entry.et);
+    if (!same) {
       data.results[id] = { ...prev, ...entry };
-      console.log(`更新: ${id} ${h} ${entry.score[0]} - ${entry.score[1]} ${a}`);
-      updated++;
+      const pkText = entry.pk ? ` (PK ${entry.pk[0]}-${entry.pk[1]})` : '';
+      console.log(`更新: ${id} ${h} ${entry.score[0]} - ${entry.score[1]} ${a}${pkText}`);
+      scoreChanges++;
     }
   }
 
-  if (updated > 0) {
+  if (scoreChanges + slotChanges > 0) {
     data.lastUpdated = new Date().toISOString();
     await writeFile(RESULTS_PATH, JSON.stringify(data, null, 2) + '\n');
   }
-  console.log(`完了: ${updated}件更新 / 照合不可${unmatched}件 / 総${matches.length}試合分のフィード`);
-  if (updated === 0) {
+  console.log(
+    `完了: 結果${scoreChanges}件 / 対戦カード${slotChanges}件 / 照合不可${unmatched}件 / 総${matches.length}試合分のフィード`,
+  );
+  if (scoreChanges + slotChanges === 0) {
     console.log('新しい結果はありませんでした(フィード未反映の場合は results.json を手動編集)。');
   }
 }

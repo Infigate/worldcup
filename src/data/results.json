@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-06-30T23:58:42.180Z",
+  "lastUpdated": "2026-07-01T02:48:24.377Z",
   "results": {
     "m1": {
       "score": [
@@ -431,13 +431,23 @@
       "score": [
         1,
         1
-      ]
+      ],
+      "pk": [
+        3,
+        4
+      ],
+      "et": true
     },
     "m75": {
       "score": [
         1,
         1
-      ]
+      ],
+      "pk": [
+        2,
+        3
+      ],
+      "et": true
     },
     "m78": {
       "score": [
@@ -450,7 +460,90 @@
         3,
         0
       ]
+    },
+    "m3": {
+      "score": [
+        1,
+        1
+      ]
+    },
+    "m26": {
+      "score": [
+        4,
+        1
+      ]
+    },
+    "m52": {
+      "score": [
+        3,
+        1
+      ]
     }
   },
-  "slots": {}
+  "slots": {
+    "m73": {
+      "home": "rsa",
+      "away": "can"
+    },
+    "m74": {
+      "home": "ger",
+      "away": "par"
+    },
+    "m75": {
+      "home": "ned",
+      "away": "mar"
+    },
+    "m76": {
+      "home": "bra",
+      "away": "jpn"
+    },
+    "m77": {
+      "home": "fra",
+      "away": "swe"
+    },
+    "m78": {
+      "home": "civ",
+      "away": "nor"
+    },
+    "m79": {
+      "home": "mex",
+      "away": "ecu"
+    },
+    "m80": {
+      "home": "eng",
+      "away": "cod"
+    },
+    "m81": {
+      "home": "usa",
+      "away": "bih"
+    },
+    "m82": {
+      "home": "bel",
+      "away": "sen"
+    },
+    "m83": {
+      "home": "por",
+      "away": "cro"
+    },
+    "m84": {
+      "home": "esp",
+      "away": "aut"
+    },
+    "m85": {
+      "home": "sui",
+      "away": "alg"
+    },
+    "m86": {
+      "home": "arg",
+      "away": "cpv"
+    },
+    "m87": {
+      "home": "col",
+      "away": "gha"
+    },
+    "m88": {
+      "home": "aus",
+      "away": "egy"
+    }
+  }
 }

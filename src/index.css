@@ -418,15 +418,128 @@ tr.rank-3 {
 }
 
 /* ---------- ブラケット ---------- */
+/* 進行サマリー */
+.bk-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.bk-progress {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bk-step {
+  flex: 1;
+  min-width: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.bk-step-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.bk-step-count {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.bk-step-done {
+  border-color: rgba(52, 211, 153, 0.4);
+  background: rgba(52, 211, 153, 0.08);
+}
+.bk-step-done .bk-step-name {
+  color: var(--ok);
+}
+
+.bk-step-live {
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.bk-step-live .bk-step-name {
+  color: #93c5fd;
+}
+
+.bk-step-todo {
+  opacity: 0.65;
+}
+
+.bk-next {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.14), rgba(59, 130, 246, 0.04));
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.bk-next-label {
+  font-weight: 700;
+  color: #93c5fd;
+  white-space: nowrap;
+}
+
+.bk-next-teams {
+  font-weight: 700;
+}
+
+.bk-next-when {
+  margin-left: auto;
+  color: var(--text-dim);
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  white-space: nowrap;
+}
+.bk-next-when b {
+  color: var(--gold);
+}
+
+.bk-next-done {
+  justify-content: center;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* スクロール領域 */
 .bracket-scroll {
   overflow-x: auto;
   padding-bottom: 12px;
 }
 
+.bracket-hint {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin: 0 0 10px;
+}
+@media (min-width: 1180px) {
+  .bracket-hint {
+    display: none;
+  }
+}
+
 .bracket {
   display: flex;
-  gap: 18px;
-  min-width: 1500px;
+  gap: 30px;
+  min-width: 1160px;
   align-items: stretch;
 }
 
@@ -434,13 +547,19 @@ tr.rank-3 {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 188px;
 }
 
 .bk-col-title {
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   color: #93c5fd;
-  margin: 0 0 10px;
+  margin: 0 0 12px;
+  padding: 5px 0;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
 }
 
 .bk-col-matches {
@@ -448,22 +567,45 @@ tr.rank-3 {
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-  gap: 8px;
+  gap: 10px;
+}
+
+/* ラウンド間のつなぎ線 (列の高さが揃い各カード中心が一致するため左右のnubで接続感を出す) */
+.bk-col:not(.bk-col-r32) .bk-card::before,
+.bk-col:not(.bk-col-final) .bk-card::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 15px;
+  height: 2px;
+  background: var(--border);
+}
+.bk-card::after {
+  right: -15px;
+}
+.bk-card::before {
+  left: -15px;
 }
 
 .bk-card {
+  position: relative;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 8px 10px;
   width: 100%;
   text-align: left;
-  transition: border-color 0.15s, transform 0.1s;
+  transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s;
 }
 
 .bk-card:hover {
   border-color: var(--accent);
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.bk-card.status-finished {
+  background: var(--bg-2);
 }
 
 .bk-meta {
@@ -472,7 +614,101 @@ tr.rank-3 {
   align-items: center;
   font-size: 10px;
   color: var(--text-dim);
-  margin-bottom: 5px;
+  margin-bottom: 6px;
+}
+
+.bk-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+.bk-tag-done {
+  background: rgba(147, 163, 196, 0.15);
+  color: var(--text-dim);
+}
+.bk-tag-pk {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--gold);
+}
+.bk-tag-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+}
+.bk-tag-next {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+}
+
+.bk-side {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  padding: 5px 6px;
+  border-radius: 7px;
+}
+
+.bk-flag {
+  font-size: 15px;
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.bk-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bk-check {
+  color: var(--ok);
+  font-weight: 800;
+}
+
+.bk-score {
+  font-weight: 800;
+  min-width: 16px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.bk-side.winner {
+  background: rgba(52, 211, 153, 0.12);
+  font-weight: 800;
+  color: #fff;
+}
+.bk-side.winner .bk-score {
+  color: var(--ok);
+}
+
+.bk-side.lost {
+  opacity: 0.5;
+}
+
+.bk-side.followed .bk-name {
+  color: var(--gold);
+}
+
+.bk-side.tbd {
+  opacity: 0.85;
+}
+.bk-side.tbd .bk-name {
+  color: var(--text-dim);
+  font-size: 11.5px;
+}
+
+.bk-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px dashed var(--border);
+  font-size: 10px;
+  color: var(--text-dim);
 }
 
 .bk-pk {
@@ -480,46 +716,32 @@ tr.rank-3 {
   font-weight: 700;
 }
 
-.bk-side {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  padding: 3px 4px;
-  border-radius: 6px;
-}
-
-.bk-side.winner {
+.bk-terr {
+  margin-left: auto;
+  background: rgba(248, 113, 113, 0.16);
+  color: #fca5a5;
+  border-radius: 4px;
+  padding: 1px 6px;
   font-weight: 700;
-  color: #fff;
-  background: rgba(52, 211, 153, 0.1);
 }
 
-.bk-side.followed .bk-name {
-  color: var(--gold);
-}
-
-.bk-side.tbd .bk-name {
-  color: var(--text-dim);
-  font-size: 11.5px;
-}
-
-.bk-score {
-  font-weight: 700;
-  min-width: 18px;
-  text-align: right;
+/* 決勝列 */
+.bk-col-final .bk-col-matches {
+  justify-content: center;
+  gap: 14px;
 }
 
 .bk-champion {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(251, 191, 36, 0.03));
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.14), rgba(251, 191, 36, 0.03));
   border: 1px dashed rgba(251, 191, 36, 0.5);
   border-radius: 12px;
   text-align: center;
-  padding: 14px 10px;
+  padding: 16px 10px;
 }
 
 .bk-champion.decided {
   border-style: solid;
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.25);
   animation: pulse 2.5s infinite;
 }
 
@@ -527,19 +749,35 @@ tr.rank-3 {
   display: block;
   font-size: 11px;
   color: var(--gold);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-weight: 700;
 }
 
 .bk-champ-team {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 800;
 }
 
-.bk-third h4 {
-  margin: 14px 0 6px;
-  font-size: 12px;
+/* 3位決定戦 */
+.bk-third-section {
+  margin-top: 22px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.bk-third-title {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+.bk-third-title small {
   color: var(--text-dim);
-  text-align: center;
+  font-weight: 400;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.bk-third-card {
+  max-width: 320px;
 }
 
 /* ---------- 日程・放送 ---------- */

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type Tab = 'groups' | 'bracket' | 'schedule' | 'follow';
+export type Tab = 'bracket' | 'schedule' | 'follow';
 
 interface AppState {
   now: number; // 現在時刻(ms)。1秒ごとに更新され、6時間境界を跨ぐと結果が反映される
@@ -20,7 +20,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       now: Date.now(),
-      tab: 'groups',
+      tab: 'bracket',
       selectedMatchId: null,
       followedTeams: [],
       followedPlayers: [],

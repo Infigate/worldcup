@@ -6,19 +6,17 @@ import type { MatchStatus, TournamentState } from '../types';
 import { fmtJstDate } from '../utils/time';
 import { MatchRow } from './MatchBits';
 
-type StageFilter = 'all' | 'group' | 'knockout';
 type StatusFilter = 'all' | MatchStatus;
 
 export function SchedulePage({ t }: { t: TournamentState }) {
-  const [stageFilter, setStageFilter] = useState<StageFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [followedOnly, setFollowedOnly] = useState(false);
   const followed = useFollowedTeamIds();
 
+  // グループステージは終了済み。決勝トーナメント(ラウンド32以降)のみ掲載。
   const filtered = SCHEDULE.filter((m) => {
+    if (m.stage === 'group') return false;
     const v = t.views.get(m.id)!;
-    if (stageFilter === 'group' && m.stage !== 'group') return false;
-    if (stageFilter === 'knockout' && m.stage === 'group') return false;
     if (statusFilter !== 'all' && v.status !== statusFilter) return false;
     if (followedOnly) {
       const involves =
@@ -39,8 +37,10 @@ export function SchedulePage({ t }: { t: TournamentState }) {
   return (
     <div className="page">
       <div className="page-head">
-        <h2>試合日程・放送/配信</h2>
-        <p className="page-desc">時刻は日本時間(JST)と現地時刻を併記。クリックで詳細・視聴ツールを表示。</p>
+        <h2>決勝トーナメント 日程・放送/配信</h2>
+        <p className="page-desc">
+          ラウンド32以降の全試合。時刻は日本時間(JST)と現地時刻を併記。クリックで詳細・視聴ツールを表示。
+        </p>
       </div>
 
       <div className="broadcast-legend">
@@ -60,19 +60,6 @@ export function SchedulePage({ t }: { t: TournamentState }) {
       </div>
 
       <div className="filters">
-        <div className="filter-group">
-          {(
-            [
-              ['all', 'すべて'],
-              ['group', 'グループステージ'],
-              ['knockout', '決勝トーナメント'],
-            ] as [StageFilter, string][]
-          ).map(([key, label]) => (
-            <button key={key} className={`filter-btn ${stageFilter === key ? 'active' : ''}`} onClick={() => setStageFilter(key)}>
-              {label}
-            </button>
-          ))}
-        </div>
         <div className="filter-group">
           {(
             [

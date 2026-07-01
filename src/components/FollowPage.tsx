@@ -33,7 +33,7 @@ export function FollowPage({ t }: { t: TournamentState }) {
     <div className="page">
       <div className="page-head">
         <h2>マイフォロー</h2>
-        <p className="page-desc">注目の国・選手を選ぶと、関連する試合を自動で追っかけ。結果は1日4回の更新で反映されます。</p>
+        <p className="page-desc">注目の国・選手を選ぶと、関連する試合を自動で追っかけ。結果は1時間ごとの更新で反映されます。</p>
       </div>
 
       {hasFollows && (

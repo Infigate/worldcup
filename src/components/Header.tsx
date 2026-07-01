@@ -5,7 +5,6 @@ import type { TournamentState } from '../types';
 import { fmtJst, fmtClock } from '../utils/time';
 
 const TABS: [Tab, string][] = [
-  ['groups', 'グループステージ'],
   ['bracket', '決勝トーナメント'],
   ['schedule', '日程・放送'],
   ['follow', 'マイフォロー'],

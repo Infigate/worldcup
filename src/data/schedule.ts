@@ -167,11 +167,28 @@ function kickoffIso(date: string, localTime: string, venueId: string): string {
   return new Date(Date.UTC(2026, mo - 1, d, h - offset, mi)).toISOString();
 }
 
+// 決勝トーナメントの地上波(NHK総合/日本テレビ系/フジテレビ系)中継ラインアップ。
+// 出典: NHK・民放各社 発表 (オリコン/Goal.com 等, 2026年7月)。放送局はJST日時で
+// 本アプリの日程に対応させて確定分のみ記載 (未発表分は順次追記)。
+const TERRESTRIAL_KO: Record<number, string> = {
+  // ラウンド32 (NHK総合が決勝T1回戦の主要9試合を地上波中継)
+  73: 'nhk', 75: 'nhk', 76: 'nhk', 79: 'nhk', 81: 'nhk', 82: 'nhk', 84: 'nhk', 85: 'nhk', 88: 'nhk',
+  // ラウンド16
+  89: 'ntv', 90: 'nhk', 91: 'nhk', 93: 'ntv', 94: 'fuji', 96: 'nhk',
+  // 準々決勝
+  98: 'fuji', 99: 'nhk',
+  // 準決勝
+  101: 'ntv', 102: 'nhk',
+  // 3位決定戦・決勝
+  103: 'nhk', 104: 'nhk',
+};
+
 // 視聴ツール: DAZN(全試合) + ABEMA de DAZN + NHK BSプレミアム4K(全試合) + 確定済み地上波
 function broadcastsFor(n: number): string[] {
   const ids = ['dazn', 'abemadazn', 'nhkbs4k'];
-  if (n === 11 || n === 57) ids.push('nhk'); // 日本戦第1戦・第3戦 = NHK総合
-  if (n === 36) ids.push('ntv'); // 日本戦第2戦 = 日本テレビ
+  if (n === 11 || n === 57) ids.push('nhk'); // グループ日本戦第1戦・第3戦 = NHK総合
+  if (n === 36) ids.push('ntv'); // グループ日本戦第2戦 = 日本テレビ
+  if (TERRESTRIAL_KO[n]) ids.push(TERRESTRIAL_KO[n]); // 決勝トーナメントの地上波
   return ids;
 }
 
