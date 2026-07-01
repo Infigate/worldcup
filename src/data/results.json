@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-07-01T02:48:24.377Z",
+  "lastUpdated": "2026-07-01T08:05:43.989Z",
   "results": {
     "m1": {
       "score": [
@@ -478,6 +478,12 @@
         3,
         1
       ]
+    },
+    "m79": {
+      "score": [
+        2,
+        0
+      ]
     }
   },
   "slots": {
@@ -544,6 +550,18 @@
     "m88": {
       "home": "aus",
       "away": "egy"
+    },
+    "m89": {
+      "home": "par",
+      "away": "fra"
+    },
+    "m90": {
+      "home": "can",
+      "away": "mar"
+    },
+    "m91": {
+      "home": "bra",
+      "away": "nor"
     }
   }
 }
